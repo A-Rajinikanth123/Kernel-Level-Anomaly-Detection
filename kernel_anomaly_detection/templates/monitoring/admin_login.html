@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Root Admin Portal | Kernel Sentinel SOC</title>
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom Cyber SOC Stylesheet -->
+    <link rel="stylesheet" href="/static/css/cyber_soc.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 20%, #1e1322 0%, #0a0e17 80%);
+            margin: 0;
+            padding: 1.5rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .admin-auth-card {
+            width: 100%;
+            max-width: 480px;
+            background: #111726;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(239, 68, 68, 0.12);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .admin-auth-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-crimson), #f97316, var(--accent-cyan));
+        }
+
+        .privilege-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-crimson);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .auth-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .auth-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.76rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .form-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            background: #090e18;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 11px 14px 11px 40px;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: var(--font-mono);
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-crimson);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+            background: #0c121e;
+        }
+
+        .token-timer {
+            font-size: 0.72rem;
+            color: var(--accent-cyan);
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+
+        .btn-admin-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fff;
+            padding: 13px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            transition: all 0.2s ease;
+            box-shadow: 0 5px 20px rgba(239, 68, 68, 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-admin-submit:hover {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+        }
+
+        .security-warning-box {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px dashed rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-top: 1.5rem;
+            font-size: 0.74rem;
+            color: #fca5a5;
+            line-height: 1.45;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .switch-portal-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.78rem;
+        }
+
+        .switch-link {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .switch-link:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-auth-card">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div class="privilege-badge">
+                <i class="fa-solid fa-lock"></i> PRIVILEGED ROOT GATEWAY
+            </div>
+            <div class="auth-title" style="justify-content: center;">
+                <i class="fa-solid fa-shield-virus" style="color: var(--accent-crimson);"></i>
+                <span>SOC ADMINISTRATOR ACCESS</span>
+            </div>
+            <div class="auth-subtitle">
+                Enterprise Security Operations Center &bull; Lead Admin Portal
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div style="background: rgba(239,68,68,0.18); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; padding: 11px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% url 'admin_login' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label" for="username">
+                    <span>Admin Call Sign / UID</span>
+                    <span style="color: var(--accent-crimson); font-weight: 600;">ROOT REQUIRED</span>
+                </label>
+                <div class="form-input-wrap">
+                    <i class="fa-solid fa-user-shield input-icon"></i>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="Enter Admin UID" required autofocus>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">
+                    <span>Master Security Passphrase</span>
+                    <span style="color: var(--text-dim);">SHA-256</span>
+                </label>
+                <div class="form-input-wrap">
+                    <i class="fa-solid fa-key input-icon"></i>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="Enter Passphrase" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="security_token">
+                    <span>Hardware Token / Dynamic TOTP</span>
+                    <span class="token-timer" id="token-clock"><i class="fa-solid fa-clock"></i> Valid (28s)</span>
+                </label>
+                <div class="form-input-wrap">
+                    <i class="fa-solid fa-fingerprint input-icon" style="color: var(--accent-cyan);"></i>
+                    <input type="text" id="security_token" name="security_token" class="form-input" placeholder="6-digit TOTP / Key" style="color: var(--accent-cyan); letter-spacing: 0.15em;">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="target">
+                    <span>Destination Console</span>
+                </label>
+                <select id="target" name="target" style="width: 100%; background: #090e18; border: 1px solid var(--border-color); color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 0.88rem; outline: none;">
+                    <option value="dashboard" selected>SOC Security Operations Dashboard (Live Telemetry)</option>
+                    <option value="django_admin">Django Core Administrative Console (/admin/)</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <button type="submit" class="btn-admin-submit">
+                    <i class="fa-solid fa-unlock-keyhole"></i> Authorize Privileged Session
+                </button>
+            </div>
+        </form>
+
+        <div class="security-warning-box">
+            <i class="fa-solid fa-shield-halved" style="font-size: 1.1rem; flex-shrink: 0; color: var(--accent-crimson); margin-top: 2px;"></i>
+            <div>
+                <strong>SYSTEM AUDIT NOTICE:</strong>
+                All administrator session activities, elevated system call commands, and process terminations are recorded to the immutable kernel audit log with real-time SIEM synchronization.
+            </div>
+        </div>
+
+        <div class="switch-portal-row">
+            <span style="color: var(--text-dim);">Need analyst access?</span>
+            <a href="{% url 'login' %}" class="switch-link">
+                <i class="fa-solid fa-user-lock"></i> Switch to Security Analyst Portal
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulated TOTP clock countdown for authentic SOC experience
+        let seconds = 28;
+        setInterval(() => {
+            seconds--;
+            if (seconds <= 0) seconds = 30;
+            const el = document.getElementById('token-clock');
+            if (el) {
+                el.innerHTML = `<i class="fa-solid fa-clock"></i> Valid (${seconds}s)`;
+            }
+        }, 1000);
+    </script>
+
+</body>
+</html>

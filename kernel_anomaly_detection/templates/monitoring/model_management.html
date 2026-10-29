@@ -1,0 +1,206 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}AI/ML Engine | Kernel Sentinel{% endblock %}
+{% block page_title %}Machine Learning Anomaly Detection Model{% endblock %}
+
+{% block content %}
+
+<!-- ML Overview Card -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Model Architecture</div>
+            <div class="stat-value" style="font-size: 1.25rem;">Isolation Forest</div>
+            <div class="stat-sub">Scikit-Learn Ensemble</div>
+        </div>
+        <div class="stat-icon"><i class="fa-solid fa-tree"></i></div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Contamination Rate</div>
+            <div class="stat-value" style="color: var(--accent-cyan);">{{ meta.contamination }}</div>
+            <div class="stat-sub">Expected Outlier Ratio</div>
+        </div>
+        <div class="stat-icon"><i class="fa-solid fa-sliders"></i></div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Base Estimators</div>
+            <div class="stat-value" style="color: var(--accent-purple);">{{ meta.n_estimators }}</div>
+            <div class="stat-sub">Isolation Decision Trees</div>
+        </div>
+        <div class="stat-icon"><i class="fa-solid fa-network-wired"></i></div>
+    </div>
+
+    <div class="stat-card healthy-card">
+        <div class="stat-info">
+            <div class="stat-label">Model Accuracy</div>
+            <div class="stat-value" style="color: var(--accent-emerald);">{{ meta.accuracy_score }}%</div>
+            <div class="stat-sub">Validation Baseline</div>
+        </div>
+        <div class="stat-icon"><i class="fa-solid fa-bullseye"></i></div>
+    </div>
+</div>
+
+<!-- Architecture & Pipeline Description -->
+<div class="soc-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <div class="soc-panel-title" style="margin-bottom: 0.75rem;">
+        <i class="fa-solid fa-diagram-project"></i>
+        <span>AI Behavioral Analysis Pipeline (Kernel Space -&gt; User Space -&gt; ML Scoring)</span>
+    </div>
+    <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+        The system utilizes an unsupervised <strong>Isolation Forest</strong> algorithm to isolate anomalies instead of profiling normal points. Since malicious kernel events (such as unauthorized privilege escalation or burst file encryption) have abnormal system call patterns and resource signatures, they require fewer random partition splits to isolate, resulting in high anomaly scores ($0.0 \to 1.0$).
+    </p>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.25); padding: 1rem; border-radius: 8px;">
+            <strong style="color: #fff; font-size: 0.82rem; display: block; margin-bottom: 4px;">1. Kernel eBPF Telemetry</strong>
+            <p style="color: var(--text-dim); font-size: 0.78rem; margin: 0;">Hooks into tracepoints sys_enter_execve, openat, connect, setuid via BPF perf buffer.</p>
+        </div>
+        <div style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.25); padding: 1rem; border-radius: 8px;">
+            <strong style="color: #fff; font-size: 0.82rem; display: block; margin-bottom: 4px;">2. Behavioral Feature Vector</strong>
+            <p style="color: var(--text-dim); font-size: 0.78rem; margin: 0;">Normalizes 10 kernel dimensions using StandardScaler before feeding into tree isolation.</p>
+        </div>
+        <div style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.25); padding: 1rem; border-radius: 8px;">
+            <strong style="color: #fff; font-size: 0.82rem; display: block; margin-bottom: 4px;">3. Calibrated Threat Scoring</strong>
+            <p style="color: var(--text-dim); font-size: 0.78rem; margin: 0;">Calibrates raw decision function to continuous risk score and categorizes into Normal, Low, Medium, High, Critical.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Features & Baseline Normal Metrics Table -->
+<div class="soc-panel">
+    <div class="soc-panel-header">
+        <div class="soc-panel-title">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Engineered Kernel Feature Dimensions & Normal Baseline Statistics</span>
+        </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="soc-table">
+            <thead>
+                <tr>
+                    <th>Feature Key</th>
+                    <th>Description</th>
+                    <th>Normal Mean</th>
+                    <th>Standard Dev</th>
+                    <th>Anomalous Trigger Behavior</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fname in feature_names %}
+                <tr>
+                    <td class="font-mono text-cyan"><strong>{{ fname }}</strong></td>
+                    <td style="color: var(--text-muted);">
+                        {% if fname == 'syscall_freq' %}System call invocation rate per second
+                        {% elif fname == 'cpu_usage' %}Process CPU utilization percentage
+                        {% elif fname == 'mem_usage_mb' %}Resident memory allocated in MB
+                        {% elif fname == 'thread_count' %}Active thread count spawned by process
+                        {% elif fname == 'open_fds' %}Open file descriptors / active OS handles
+                        {% elif fname == 'file_op_rate' %}Frequency of file open/read/write/delete ops
+                        {% elif fname == 'net_conn_rate' %}Network socket connect / bind rate
+                        {% elif fname == 'is_priv_escalation' %}Privilege transition flag (setuid, capset, root)
+                        {% elif fname == 'suspicious_path' %}Binary executing from /tmp, /dev/shm, Temp
+                        {% elif fname == 'sensitive_target' %}Targeting /etc/shadow, SAM, hosts, system keys
+                        {% endif %}
+                    </td>
+                    <td class="font-mono">
+                        {% for key, val in baseline_stats.items %}
+                            {% if key == fname %}{{ val.mean }}{% endif %}
+                        {% endfor %}
+                    </td>
+                    <td class="font-mono text-dim">
+                        {% for key, val in baseline_stats.items %}
+                            {% if key == fname %}&plusmn;{{ val.std }}{% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if fname == 'syscall_freq' %}<span style="color: var(--accent-amber); font-size: 0.8rem;">Spikes &gt; 250 sys/sec (Fork bomb)</span>
+                        {% elif fname == 'file_op_rate' %}<span style="color: #f97316; font-size: 0.8rem;">Spikes &gt; 100 ops/sec (Ransomware)</span>
+                        {% elif fname == 'is_priv_escalation' %}<span style="color: var(--accent-crimson); font-size: 0.8rem; font-weight: 700;">Value = 1.0 (Exploitation)</span>
+                        {% elif fname == 'sensitive_target' %}<span style="color: var(--accent-crimson); font-size: 0.8rem; font-weight: 700;">Value = 1.0 (Credential theft)</span>
+                        {% else %}<span style="color: var(--text-dim); font-size: 0.8rem;">Statistical outlier &gt; 3.0 &sigma;</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Retrain Baseline Controls -->
+<div class="soc-panel" style="padding: 1.5rem;">
+    <div class="soc-panel-title" style="margin-bottom: 1rem;">
+        <i class="fa-solid fa-arrows-rotate"></i>
+        <span>Retrain AI Anomaly Detection Baseline</span>
+    </div>
+
+    <form id="retrain-form" style="display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-end;">
+        <div style="flex: 1; min-width: 200px;">
+            <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase;">
+                Contamination Factor (Current: <span id="lbl-contam">{{ meta.contamination }}</span>)
+            </label>
+            <input type="range" id="input-contamination" min="0.01" max="0.15" step="0.01" value="{{ meta.contamination }}" 
+                   style="width: 100%; accent-color: var(--accent-cyan);"
+                   oninput="document.getElementById('lbl-contam').innerText = this.value">
+        </div>
+
+        <div style="width: 180px;">
+            <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase;">Decision Trees</label>
+            <select id="input-n-estimators" style="width: 100%; background: #0c121e; border: 1px solid var(--border-color); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem;">
+                <option value="80">80 Trees</option>
+                <option value="120" selected>120 Trees (Optimal)</option>
+                <option value="200">200 Trees</option>
+            </select>
+        </div>
+
+        <div>
+            <button type="submit" id="btn-retrain" class="btn-action btn-view" style="padding: 10px 20px;">
+                <i class="fa-solid fa-gear"></i> Retrain Model Baseline
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('retrain-form');
+    const btn = document.getElementById('btn-retrain');
+
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const contam = parseFloat(document.getElementById('input-contamination').value);
+            const nTrees = parseInt(document.getElementById('input-n-estimators').value);
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> Training Baseline...`;
+
+            fetch('/api/model/retrain/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contamination: contam, n_estimators: nTrees })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-check"></i> Retraining Complete`;
+                showToast(`<strong>${data.message}</strong><br>Trained on ${data.details.samples} synthetic & live samples.`, 'success');
+                setTimeout(() => location.reload(), 1500);
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = `Retrain Model Baseline`;
+                showToast(`Retraining error: ${err}`, 'danger');
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

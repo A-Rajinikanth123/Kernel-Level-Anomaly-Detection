@@ -1,0 +1,159 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Threat Alerts | Kernel Sentinel{% endblock %}
+{% block page_title %}Security Incidents & Anomaly Alerts{% endblock %}
+
+{% block content %}
+
+<!-- Status Tabs & Filter -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'alerts' %}" class="btn-action {% if not status_filter %}btn-view{% else %}" style="background: rgba(255,255,255,0.05); color: var(--text-muted);{% endif %}">
+            All Incidents
+        </a>
+        <a href="{% url 'alerts' %}?status=ACTIVE" class="btn-action {% if status_filter == 'ACTIVE' %}btn-kill{% else %}" style="background: rgba(255,255,255,0.05); color: var(--text-muted);{% endif %}">
+            <i class="fa-solid fa-triangle-exclamation"></i> Active Threats
+        </a>
+        <a href="{% url 'alerts' %}?status=INVESTIGATING" class="btn-action {% if status_filter == 'INVESTIGATING' %}btn-view{% else %}" style="background: rgba(255,255,255,0.05); color: var(--text-muted);{% endif %}">
+            <i class="fa-solid fa-magnifying-glass"></i> Investigating
+        </a>
+        <a href="{% url 'alerts' %}?status=RESOLVED" class="btn-action {% if status_filter == 'RESOLVED' %}btn-resolve{% else %}" style="background: rgba(255,255,255,0.05); color: var(--text-muted);{% endif %}">
+            <i class="fa-solid fa-check"></i> Resolved
+        </a>
+    </div>
+
+    <div>
+        <form method="GET" action="{% url 'alerts' %}" style="display: flex; gap: 8px;">
+            <input type="hidden" name="status" value="{{ status_filter }}">
+            <select name="threat" onchange="this.form.submit()" style="background: #0c121e; border: 1px solid var(--border-color); color: #fff; padding: 7px 12px; border-radius: 6px; font-size: 0.8rem;">
+                <option value="">Filter By Severity</option>
+                <option value="CRITICAL" {% if threat_filter == 'CRITICAL' %}selected{% endif %}>Critical Threat</option>
+                <option value="HIGH" {% if threat_filter == 'HIGH' %}selected{% endif %}>High Risk</option>
+                <option value="MEDIUM" {% if threat_filter == 'MEDIUM' %}selected{% endif %}>Medium Risk</option>
+                <option value="LOW" {% if threat_filter == 'LOW' %}selected{% endif %}>Low Risk</option>
+            </select>
+        </form>
+    </div>
+</div>
+
+<!-- Alerts Table -->
+<div class="soc-panel">
+    <div class="soc-panel-header">
+        <div class="soc-panel-title">
+            <i class="fa-solid fa-shield-virus"></i>
+            <span>Security Incident Triage Console</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="soc-table">
+            <thead>
+                <tr>
+                    <th>Alert ID</th>
+                    <th>Severity</th>
+                    <th>Created</th>
+                    <th>Incident Title</th>
+                    <th>Process (PID)</th>
+                    <th>Anomaly Score</th>
+                    <th>Status</th>
+                    <th>Mitigation Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in page_obj %}
+                <tr id="alert-row-{{ alert.alert_id }}">
+                    <td class="font-mono text-cyan" style="font-weight: 700;">
+                        <a href="{% url 'investigate' alert.alert_id %}" style="color: var(--accent-cyan); text-decoration: none;">
+                            {{ alert.alert_id }}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge-threat badge-{{ alert.threat_level }}">{{ alert.threat_level }}</span>
+                    </td>
+                    <td class="font-mono text-dim" style="font-size: 0.78rem;">
+                        {{ alert.created_at|date:"M d, H:i:s" }}
+                    </td>
+                    <td style="max-width: 280px;">
+                        <strong style="color: #fff; display: block; font-size: 0.84rem;">{{ alert.title }}</strong>
+                        <span style="font-size: 0.75rem; color: var(--text-dim);">{{ alert.description|truncatechars:100 }}</span>
+                    </td>
+                    <td class="font-mono">
+                        {% if alert.event %}
+                            {{ alert.event.process_name }} <span class="text-dim">({{ alert.event.process_id }})</span>
+                        {% else %}
+                            <span class="text-dim">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td class="font-mono" style="font-weight: 700; color: {% if alert.threat_level == 'CRITICAL' %}var(--accent-crimson){% elif alert.threat_level == 'HIGH' %}#f97316{% else %}var(--accent-amber){% endif %};">
+                        {% if alert.anomaly_result %}
+                            {{ alert.anomaly_result.anomaly_score|floatformat:2 }}
+                        {% else %}
+                            0.88
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="font-size: 0.75rem; font-weight: 700; color: {% if alert.status == 'ACTIVE' %}var(--accent-crimson){% elif alert.status == 'RESOLVED' %}var(--accent-emerald){% else %}var(--accent-amber){% endif %};">
+                            {{ alert.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 6px;">
+                            <a href="{% url 'investigate' alert.alert_id %}" class="btn-action btn-view" title="Investigate Forensics">
+                                <i class="fa-solid fa-magnifying-glass"></i> Forensics
+                            </a>
+                            {% if alert.status != 'RESOLVED' %}
+                                <button class="btn-action btn-kill btn-quick-mitigate" 
+                                        data-alert-id="{{ alert.alert_id }}" 
+                                        data-action="KILL_PROCESS"
+                                        title="Kill malicious process immediately">
+                                    <i class="fa-solid fa-skull"></i> Kill
+                                </button>
+                                <button class="btn-action btn-resolve btn-quick-mitigate" 
+                                        data-alert-id="{{ alert.alert_id }}" 
+                                        data-action="MARK_RESOLVED"
+                                        title="Mark incident resolved">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 3rem;">
+                        No security incidents found matching filter parameters.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div style="padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color);">
+        <div>
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}&threat={{ threat_filter }}" class="btn-action btn-view">
+                    <i class="fa-solid fa-chevron-left"></i> Previous
+                </a>
+            {% endif %}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </div>
+        <div>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}&threat={{ threat_filter }}" class="btn-action btn-view">
+                    Next <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

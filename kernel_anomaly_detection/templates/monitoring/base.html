@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kernel Sentinel SOC{% endblock %} | AI Kernel Anomaly Detection</title>
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Custom Cyber SOC Stylesheet -->
+    <link rel="stylesheet" href="/static/css/cyber_soc.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="soc-sidebar">
+        <div class="sidebar-header">
+            <span class="brand-badge"><i class="fa-solid fa-microchip"></i> eBPF / AI Engine</span>
+            <div class="brand-title">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>KERNEL-SENTINEL</span>
+            </div>
+            <div class="brand-subtitle">Operating System Anomaly Detection</div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Command Center</div>
+            <a href="{% url 'dashboard' %}" class="soc-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>SOC Dashboard</span>
+            </a>
+            <a href="{% url 'events' %}" class="soc-nav-link {% if request.resolver_match.url_name == 'events' %}active{% endif %}">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Kernel Events</span>
+            </a>
+            <a href="{% url 'alerts' %}" class="soc-nav-link {% if request.resolver_match.url_name == 'alerts' %}active{% endif %}">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Threat Alerts</span>
+                {% if active_alerts %}
+                    <span class="badge-counter">{{ active_alerts }}</span>
+                {% endif %}
+            </a>
+
+            <div class="nav-section-label">AI & Threat Lab</div>
+            <a href="{% url 'simulator' %}" class="soc-nav-link {% if request.resolver_match.url_name == 'simulator' %}active{% endif %}">
+                <i class="fa-solid fa-crosshairs"></i>
+                <span>Attack Simulator</span>
+            </a>
+            <a href="{% url 'model_management' %}" class="soc-nav-link {% if request.resolver_match.url_name == 'model_management' %}active{% endif %}">
+                <i class="fa-solid fa-brain"></i>
+                <span>AI / ML Engine</span>
+            </a>
+
+            <div class="nav-section-label">Audit & Compliance</div>
+            <a href="{% url 'reports' %}" class="soc-nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                <i class="fa-solid fa-file-shield"></i>
+                <span>Security Reports</span>
+            </a>
+            <a href="{% url 'download_zip' %}" class="soc-nav-link" style="color: var(--accent-cyan);">
+                <i class="fa-solid fa-file-zipper"></i>
+                <span>Download Project ZIP</span>
+            </a>
+
+            <div class="nav-section-label">Administration</div>
+            <a href="{% url 'admin_login' %}" class="soc-nav-link" style="color: #fca5a5;">
+                <i class="fa-solid fa-user-shield" style="color: var(--accent-crimson);"></i>
+                <span>Admin Login Portal</span>
+            </a>
+            <a href="{% url 'admin:index' %}" target="_blank" class="soc-nav-link">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Django Admin</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        {{ request.user.username|make_list|first|upper }}
+                    </div>
+                    <div>
+                        <div class="user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                        <div class="user-role">
+                            {% if request.user.is_superuser %}Lead Admin{% else %}Security Analyst{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'logout' %}" class="btn-logout" title="Sign Out">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Viewport -->
+    <main class="soc-main">
+        <!-- Top SOC Status Bar -->
+        <header class="soc-topbar">
+            <div class="topbar-left">
+                <div class="soc-title-section">
+                    <h1>{% block page_title %}Security Operations Center{% endblock %}</h1>
+                    <p>Kernel Security Operations Center &bull; Real-Time Threat Intelligence</p>
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <div class="pulse-badge">
+                    <div class="pulse-dot"></div>
+                    <span>eBPF Telemetry: <strong>ACTIVE</strong></span>
+                </div>
+
+                <button id="btn-toggle-probe" class="btn-probe-toggle" title="Toggle background telemetry agent">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                    <span>Telemetry Agent</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <div class="soc-container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- Main Client Script -->
+    <script src="/static/js/dashboard.js"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

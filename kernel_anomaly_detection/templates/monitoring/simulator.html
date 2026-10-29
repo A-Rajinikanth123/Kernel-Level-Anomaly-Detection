@@ -1,0 +1,230 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Attack Simulator | Kernel Sentinel{% endblock %}
+{% block page_title %}Kernel Cyber-Attack Simulation & Validation Lab{% endblock %}
+
+{% block content %}
+
+<!-- Description Banner -->
+<div class="soc-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <div style="display: flex; gap: 1.25rem; align-items: flex-start;">
+        <div style="font-size: 2.2rem; color: var(--accent-crimson); padding-top: 4px;">
+            <i class="fa-solid fa-flask-vial"></i>
+        </div>
+        <div>
+            <h2 style="font-size: 1.25rem; color: #fff; margin-bottom: 0.5rem;">Behavioral Anomaly Detection Testing Lab</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; max-width: 900px;">
+                Traditional security tools monitor only network traffic and user-space application logs, completely missing stealthy in-memory kernel tampering, unauthorized privilege shifts, and encrypted payloads.
+                Use this testing lab to launch simulated kernel exploits against the system. The live eBPF telemetry collector and Isolation Forest AI model will instantly analyze the behavioral features, compute an anomaly score, and raise a prioritized security incident.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Attack Scenarios Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+
+    <!-- Scenario 1: Privilege Escalation -->
+    <div class="chart-card" style="border-top: 3px solid var(--accent-crimson);">
+        <div class="chart-card-header">
+            <div class="chart-title">
+                <i class="fa-solid fa-crown" style="color: var(--accent-crimson);"></i>
+                <span>1. Privilege Escalation</span>
+            </div>
+            <span class="badge-threat badge-CRITICAL">CRITICAL</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; min-height: 50px;">
+            Simulates an attacker manipulating <code class="font-mono" style="color: var(--accent-cyan);">setuid()</code> and <code class="font-mono" style="color: var(--accent-cyan);">capset()</code> to escalate an unprivileged user process to root/SYSTEM authority.
+        </p>
+        <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; margin-bottom: 1.25rem;" class="font-mono text-dim">
+            <div>&gt; Syscall: sys_enter_setuid</div>
+            <div>&gt; Transition: UID 1000 -&gt; UID 0</div>
+            <div>&gt; AI Feature: is_priv_escalation = 1.0</div>
+        </div>
+        <button class="btn-action btn-kill btn-sim-attack" data-scenario="privilege_escalation" data-label="Launch Escalation" style="width: 100%; justify-content: center; padding: 10px;">
+            <i class="fa-solid fa-crosshairs"></i> Launch Privilege Escalation
+        </button>
+    </div>
+
+    <!-- Scenario 2: Ransomware -->
+    <div class="chart-card" style="border-top: 3px solid #f97316;">
+        <div class="chart-card-header">
+            <div class="chart-title">
+                <i class="fa-solid fa-file-shield" style="color: #f97316;"></i>
+                <span>2. Ransomware Encryption</span>
+            </div>
+            <span class="badge-threat badge-HIGH">HIGH</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; min-height: 50px;">
+            Simulates rapid file traversal, write-bursts, and mass renaming in user documents directories at extreme velocities.
+        </p>
+        <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; margin-bottom: 1.25rem;" class="font-mono text-dim">
+            <div>&gt; Syscall: sys_enter_openat (write)</div>
+            <div>&gt; Velocity: 240+ file ops / sec</div>
+            <div>&gt; AI Feature: file_op_rate &gt;&gt; baseline</div>
+        </div>
+        <button class="btn-action btn-sim-attack" data-scenario="ransomware_burst" data-label="Launch Ransomware" style="width: 100%; justify-content: center; padding: 10px; background: rgba(249,115,22,0.15); color: #f97316; border-color: rgba(249,115,22,0.3);">
+            <i class="fa-solid fa-crosshairs"></i> Launch Ransomware Simulation
+        </button>
+    </div>
+
+    <!-- Scenario 3: Reverse Shell -->
+    <div class="chart-card" style="border-top: 3px solid var(--accent-amber);">
+        <div class="chart-card-header">
+            <div class="chart-title">
+                <i class="fa-solid fa-terminal" style="color: var(--accent-amber);"></i>
+                <span>3. Interactive Reverse Shell</span>
+            </div>
+            <span class="badge-threat badge-HIGH">HIGH</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; min-height: 50px;">
+            Simulates a web application vulnerability executing <code class="font-mono">/bin/sh</code> from <code class="font-mono">/tmp</code> with an outbound socket to an external adversary IP.
+        </p>
+        <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; margin-bottom: 1.25rem;" class="font-mono text-dim">
+            <div>&gt; Syscall: execve &amp; connect</div>
+            <div>&gt; Target: 185.220.101.5:4444</div>
+            <div>&gt; AI Feature: suspicious_path = 1.0</div>
+        </div>
+        <button class="btn-action btn-sim-attack" data-scenario="reverse_shell" data-label="Spawn Shell" style="width: 100%; justify-content: center; padding: 10px; background: rgba(245,158,11,0.15); color: var(--accent-amber); border-color: rgba(245,158,11,0.3);">
+            <i class="fa-solid fa-crosshairs"></i> Launch Reverse Shell
+        </button>
+    </div>
+
+    <!-- Scenario 4: Syscall Flood -->
+    <div class="chart-card" style="border-top: 3px solid var(--accent-crimson);">
+        <div class="chart-card-header">
+            <div class="chart-title">
+                <i class="fa-solid fa-bomb" style="color: var(--accent-crimson);"></i>
+                <span>4. Syscall Flood / Fork Storm</span>
+            </div>
+            <span class="badge-threat badge-CRITICAL">CRITICAL</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; min-height: 50px;">
+            Simulates rapid process spawning and high-frequency kernel syscall loops designed to exhaust process tables and starve the scheduler.
+        </p>
+        <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; margin-bottom: 1.25rem;" class="font-mono text-dim">
+            <div>&gt; Syscall: clone / fork / ptrace</div>
+            <div>&gt; Velocity: 720+ syscalls / sec</div>
+            <div>&gt; AI Feature: syscall_freq (Z &gt; 15.0)</div>
+        </div>
+        <button class="btn-action btn-kill btn-sim-attack" data-scenario="syscall_flood" data-label="Launch Flood" style="width: 100%; justify-content: center; padding: 10px;">
+            <i class="fa-solid fa-crosshairs"></i> Launch Fork Flood
+        </button>
+    </div>
+
+    <!-- Scenario 5: Rogue C2 Beaconing -->
+    <div class="chart-card" style="border-top: 3px solid var(--accent-blue);">
+        <div class="chart-card-header">
+            <div class="chart-title">
+                <i class="fa-solid fa-network-wired" style="color: var(--accent-blue);"></i>
+                <span>5. C2 Command &amp; Control</span>
+            </div>
+            <span class="badge-threat badge-MEDIUM">MEDIUM</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; min-height: 50px;">
+            Simulates a hidden background agent opening repeated TCP socket connections to a suspicious external IP address on non-standard ports.
+        </p>
+        <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; margin-bottom: 1.25rem;" class="font-mono text-dim">
+            <div>&gt; Syscall: sys_enter_connect</div>
+            <div>&gt; Destination: 194.26.29.112:8443</div>
+            <div>&gt; AI Feature: net_conn_rate &gt; baseline</div>
+        </div>
+        <button class="btn-action btn-sim-attack" data-scenario="c2_beaconing" data-label="Launch C2 Beacon" style="width: 100%; justify-content: center; padding: 10px; background: rgba(59,130,246,0.15); color: var(--accent-blue); border-color: rgba(59,130,246,0.3);">
+            <i class="fa-solid fa-crosshairs"></i> Launch C2 Beaconing
+        </button>
+    </div>
+
+    <!-- Scenario 6: /etc/shadow Credential Exfiltration -->
+    <div class="chart-card" style="border-top: 3px solid var(--accent-purple);">
+        <div class="chart-card-header">
+            <div class="chart-title">
+                <i class="fa-solid fa-key" style="color: var(--accent-purple);"></i>
+                <span>6. Credential Exfiltration</span>
+            </div>
+            <span class="badge-threat badge-CRITICAL">CRITICAL</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; min-height: 50px;">
+            Simulates a suspicious process attempting to read restricted authentication files (<code class="font-mono">/etc/shadow</code> or SAM registry hives).
+        </p>
+        <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; margin-bottom: 1.25rem;" class="font-mono text-dim">
+            <div>&gt; Target: /etc/shadow &amp; SAM</div>
+            <div>&gt; Syscall: sys_enter_openat</div>
+            <div>&gt; AI Feature: sensitive_target = 1.0</div>
+        </div>
+        <button class="btn-action btn-sim-attack" data-scenario="sensitive_file_read" data-label="Dump Credentials" style="width: 100%; justify-content: center; padding: 10px; background: rgba(139,92,246,0.15); color: var(--accent-purple); border-color: rgba(139,92,246,0.3);">
+            <i class="fa-solid fa-crosshairs"></i> Launch Credential Dump
+        </button>
+    </div>
+
+</div>
+
+<!-- Real-time Live Terminal Output -->
+<div class="soc-panel">
+    <div class="soc-panel-header">
+        <div class="soc-panel-title">
+            <i class="fa-solid fa-terminal"></i>
+            <span>Interactive Simulator Output Console</span>
+        </div>
+        <button id="btn-clear-console" class="btn-action" style="background: rgba(255,255,255,0.05); color: var(--text-dim);">
+            <i class="fa-solid fa-eraser"></i> Clear Console
+        </button>
+    </div>
+
+    <div id="sim-console" style="background: #070a10; padding: 1.25rem; font-family: var(--font-mono); font-size: 0.82rem; min-height: 180px; max-height: 300px; overflow-y: auto; color: #94a3b8; line-height: 1.6;">
+        <div style="color: var(--accent-cyan);">&gt; [KERNEL MONITOR] eBPF probes attached to sys_enter tracepoints.</div>
+        <div style="color: #64748b;">&gt; Ready for test threat injection. Select any attack scenario above...</div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const simConsole = document.getElementById('sim-console');
+    const clearBtn = document.getElementById('btn-clear-console');
+
+    if (clearBtn && simConsole) {
+        clearBtn.addEventListener('click', () => {
+            simConsole.innerHTML = '<div style="color: #64748b;">&gt; Console cleared. Ready.</div>';
+        });
+    }
+
+    // Intercept attack simulation calls to log them to terminal
+    const origSimButtons = document.querySelectorAll('.btn-sim-attack');
+    origSimButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const scenario = btn.dataset.scenario;
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.style.marginTop = '6px';
+            logEntry.innerHTML = `
+                <div style="color: #f59e0b;">&gt; [${timestamp}] INJECTING: ${scenario.toUpperCase()}...</div>
+            `;
+            simConsole.appendChild(logEntry);
+            simConsole.scrollTop = simConsole.scrollHeight;
+
+            // Wait a moment for AJAX response then append result
+            setTimeout(() => {
+                fetch('/api/events/live/')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.events && data.events.length > 0) {
+                            const latest = data.events[0];
+                            const resEntry = document.createElement('div');
+                            resEntry.innerHTML = `
+                                <div style="color: #ef4444;">&gt; [DETECTION] Kernel Event Captured: PID ${latest.pid} (${latest.process_name})</div>
+                                <div style="color: #10b981;">&gt; [AI ENGINE] Isolation Forest Score: ${latest.anomaly_score} -> Threat: ${latest.threat_level}</div>
+                                <div style="color: #06b6d4;">&gt; [ALERT] Security Alert Dispatched to SOC Dashboard.</div>
+                            `;
+                            simConsole.appendChild(resEntry);
+                            simConsole.scrollTop = simConsole.scrollHeight;
+                        }
+                    });
+            }, 600);
+        });
+    });
+});
+</script>
+{% endblock %}

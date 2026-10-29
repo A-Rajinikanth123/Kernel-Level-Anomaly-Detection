@@ -1,0 +1,283 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Investigate {{ alert.alert_id }} | Kernel Sentinel{% endblock %}
+{% block page_title %}Forensic Incident Investigation & Mitigation{% endblock %}
+
+{% block content %}
+
+<!-- Header card -->
+<div class="soc-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;">
+                <span class="badge-threat badge-{{ alert.threat_level }}">{{ alert.threat_level }} THREAT</span>
+                <span class="font-mono text-cyan" style="font-weight: 700; font-size: 1.1rem;">{{ alert.alert_id }}</span>
+                <span style="font-size: 0.8rem; color: var(--text-dim);">&bull; Detected {{ alert.created_at|date:"F d, Y H:i:s" }}</span>
+            </div>
+            <h2 style="font-size: 1.35rem; color: #fff; margin-bottom: 0.5rem;">{{ alert.title }}</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; max-width: 800px; line-height: 1.5;">
+                {{ alert.description }}
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+            <a href="{% url 'alerts' %}" class="btn-action" style="background: rgba(255,255,255,0.06); color: var(--text-muted);">
+                <i class="fa-solid fa-arrow-left"></i> Back to Alerts
+            </a>
+            {% if alert.status != 'RESOLVED' %}
+                <button class="btn-action btn-kill btn-quick-mitigate" data-alert-id="{{ alert.alert_id }}" data-action="KILL_PROCESS">
+                    <i class="fa-solid fa-skull"></i> Terminate Process
+                </button>
+                <button class="btn-action btn-view btn-quick-mitigate" data-alert-id="{{ alert.alert_id }}" data-action="QUARANTINE_FILE">
+                    <i class="fa-solid fa-box-archive"></i> Quarantine Binary
+                </button>
+                <button class="btn-action btn-resolve btn-quick-mitigate" data-alert-id="{{ alert.alert_id }}" data-action="MARK_RESOLVED">
+                    <i class="fa-solid fa-check"></i> Mark Resolved
+                </button>
+            {% else %}
+                <span class="badge-threat badge-NORMAL"><i class="fa-solid fa-check-double"></i> Threat Resolved</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Investigation Grid: Left = Forensics Details, Right = ML Anomaly Radar -->
+<div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+
+    <!-- Left: Process & System Forensics -->
+    <div class="soc-panel" style="margin-bottom: 0;">
+        <div class="soc-panel-header">
+            <div class="soc-panel-title">
+                <i class="fa-solid fa-fingerprint"></i>
+                <span>Kernel Process Context & Telemetry</span>
+            </div>
+        </div>
+
+        <div style="padding: 1.5rem;">
+            <table class="soc-table" style="font-size: 0.84rem;">
+                <tbody>
+                    <tr>
+                        <td style="width: 180px; color: var(--text-dim); font-weight: 600;">Process Name</td>
+                        <td class="font-mono"><strong>{{ event.process_name|default:"Unknown" }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-dim); font-weight: 600;">Process ID (PID)</td>
+                        <td class="font-mono text-cyan">{{ event.process_id|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-dim); font-weight: 600;">Parent PID (PPID)</td>
+                        <td class="font-mono">{{ event.parent_pid|default:"N/A" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-dim); font-weight: 600;">Executing User</td>
+                        <td>{{ event.user|default:"root" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-dim); font-weight: 600;">Binary Path</td>
+                        <td class="font-mono" style="word-break: break-all;">{{ event.binary_path|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-dim); font-weight: 600;">Triggering Syscall</td>
+                        <td class="font-mono" style="color: var(--accent-amber);">{{ event.syscall_name|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-dim); font-weight: 600;">Target Resource</td>
+                        <td class="font-mono text-dim" style="word-break: break-all;">
+                            {{ event.target_path|default:event.ip_address|default:"None" }}
+                            {% if event.port %}:{{ event.port }}{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-dim); font-weight: 600;">Privilege Escalation</td>
+                        <td>
+                            {% if event.is_privileged %}
+                                <span style="color: var(--accent-crimson); font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> YES (Root/SYSTEM Privileges Claimed)</span>
+                            {% else %}
+                                <span style="color: var(--accent-emerald);">NO (Unprivileged Context)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-dim); font-weight: 600;">Mitigation Status</td>
+                        <td>
+                            <strong style="color: {% if alert.status == 'RESOLVED' %}var(--accent-emerald){% else %}var(--accent-amber){% endif %};">
+                                {{ alert.status }}
+                            </strong>
+                            {% if alert.mitigation_action_taken %}
+                                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">
+                                    {{ alert.mitigation_action_taken }}
+                                </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Right: Machine Learning Anomaly Score & Radar -->
+    <div class="chart-card" style="margin-bottom: 0;">
+        <div class="chart-card-header">
+            <div class="chart-title">
+                <i class="fa-solid fa-brain"></i>
+                <span>ML Anomaly Radar vs Normal Baseline</span>
+            </div>
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-crimson);">
+                Score: {{ anomaly.anomaly_score|floatformat:2 }}
+            </div>
+        </div>
+
+        <div class="chart-wrapper" style="min-height: 280px;">
+            <canvas id="radarChart"></canvas>
+        </div>
+
+        <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: rgba(0,0,0,0.25); border-radius: 8px; font-size: 0.78rem;">
+            <span style="color: var(--text-dim); display: block; margin-bottom: 4px; font-weight: 600;">MODEL EXPLANATION:</span>
+            <span style="color: var(--text-muted);">
+                Model: <strong>{{ anomaly.model_type }}</strong>. 
+                {% if anomaly.explanation %}
+                    Significant behavioral deviations observed in:
+                    <strong style="color: var(--accent-amber);">{{ anomaly.explanation.keys|join:", " }}</strong>.
+                {% else %}
+                    Subtle composite feature outlier detected by Isolation Forest decision plane.
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+</div>
+
+<!-- Related Kernel Events by this Process -->
+<div class="soc-panel">
+    <div class="soc-panel-header">
+        <div class="soc-panel-title">
+            <i class="fa-solid fa-timeline"></i>
+            <span>Correlated Kernel Telemetry for PID {{ event.process_id }}</span>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-dim);">Historical process activity audit</div>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="soc-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Event Type</th>
+                    <th>Syscall</th>
+                    <th>Target Resource</th>
+                    <th>Anomaly Score</th>
+                    <th>Threat Level</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rev in related_events %}
+                <tr>
+                    <td class="font-mono text-cyan">{{ rev.timestamp|date:"H:i:s" }}</td>
+                    <td><span class="badge-type">{{ rev.event_type }}</span></td>
+                    <td class="font-mono">{{ rev.syscall_name|default:"-" }}</td>
+                    <td class="font-mono text-dim">{{ rev.target_path|default:rev.ip_address|default:"-" }}</td>
+                    <td class="font-mono">
+                        {% if rev.anomaly_result %}{{ rev.anomaly_result.anomaly_score|floatformat:2 }}{% else %}0.05{% endif %}
+                    </td>
+                    <td>
+                        {% if rev.anomaly_result %}
+                            <span class="badge-threat badge-{{ rev.anomaly_result.threat_level }}">{{ rev.anomaly_result.threat_level }}</span>
+                        {% else %}
+                            <span class="badge-threat badge-NORMAL">NORMAL</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                        No other recorded events for PID {{ event.process_id }}.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Remediation & Mitigation History -->
+<div class="soc-panel">
+    <div class="soc-panel-header">
+        <div class="soc-panel-title">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Mitigation & Audit Action Trail</span>
+        </div>
+    </div>
+
+    <div style="padding: 1.25rem 1.5rem;">
+        {% for mit in mitigations %}
+        <div style="padding: 0.75rem; border-left: 3px solid var(--accent-emerald); background: rgba(255,255,255,0.02); margin-bottom: 0.5rem; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+                <strong style="color: #fff;">{{ mit.action_type }}</strong>
+                <span class="font-mono text-dim">{{ mit.executed_at|date:"Y-m-d H:i:s" }}</span>
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">{{ mit.message }}</p>
+        </div>
+        {% empty %}
+        <p style="color: var(--text-dim); font-size: 0.85rem; margin: 0;">
+            No remediation actions executed yet for this incident. Use the action buttons above to terminate or quarantine.
+        </p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const radarCtx = document.getElementById('radarChart');
+    if (radarCtx) {
+        const labels = {{ radar_labels_json|safe }};
+        const actualData = {{ actual_vals_json|safe }};
+        const baselineData = {{ baseline_vals_json|safe }};
+
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Observed Event',
+                        data: actualData,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.25)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#ef4444'
+                    },
+                    {
+                        label: 'Normal Baseline Mean',
+                        data: baselineData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#10b981'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
+                        grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                        pointLabels: { color: '#94a3b8', font: { size: 10 } },
+                        ticks: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#94a3b8', font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

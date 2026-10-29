@@ -1,0 +1,259 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Dashboard | Kernel Sentinel{% endblock %}
+{% block page_title %}Real-Time Operating System Security Monitoring{% endblock %}
+
+{% block content %}
+
+<!-- Top Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Total Monitored Events</div>
+            <div class="stat-value" id="stat-total-events">{{ total_events }}</div>
+            <div class="stat-sub">Linux eBPF & Live Telemetry</div>
+        </div>
+        <div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div>
+    </div>
+
+    <div class="stat-card anomaly-card">
+        <div class="stat-info">
+            <div class="stat-label">Detected Anomalies</div>
+            <div class="stat-value" id="stat-total-anomalies">{{ total_anomalies }}</div>
+            <div class="stat-sub">Isolation Forest Outliers</div>
+        </div>
+        <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Active Incidents</div>
+            <div class="stat-value" id="stat-active-alerts">{{ active_alerts }}</div>
+            <div class="stat-sub">Awaiting Investigation</div>
+        </div>
+        <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    </div>
+
+    <div class="stat-card threat-card">
+        <div class="stat-info">
+            <div class="stat-label">Critical Threats</div>
+            <div class="stat-value" id="stat-critical-alerts">{{ critical_alerts }}</div>
+            <div class="stat-sub">Requires Immediate Action</div>
+        </div>
+        <div class="stat-icon"><i class="fa-solid fa-biohazard"></i></div>
+    </div>
+</div>
+
+<!-- Attack Simulation & Demo Bar -->
+<div class="soc-panel" style="margin-bottom: 2rem;">
+    <div class="soc-panel-header" style="background: rgba(239, 68, 68, 0.08); border-bottom-color: rgba(239, 68, 68, 0.2);">
+        <div class="soc-panel-title" style="color: #fca5a5;">
+            <i class="fa-solid fa-vial-virus"></i>
+            <span>Interactive Kernel Attack Injection Lab</span>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-dim);">
+            Inject simulated kernel-level exploits to demonstrate real-time AI anomaly detection
+        </div>
+    </div>
+    <div class="attack-buttons-row">
+        <button class="btn-sim-attack" data-scenario="privilege_escalation" data-label="Privilege Escalation">
+            <i class="fa-solid fa-crown"></i> 1. Privilege Escalation (setuid)
+        </button>
+        <button class="btn-sim-attack" data-scenario="ransomware_burst" data-label="Ransomware Encryptor">
+            <i class="fa-solid fa-file-shield"></i> 2. Ransomware File Burst
+        </button>
+        <button class="btn-sim-attack" data-scenario="reverse_shell" data-label="Reverse Shell Spawn">
+            <i class="fa-solid fa-terminal"></i> 3. Interactive Reverse Shell
+        </button>
+        <button class="btn-sim-attack" data-scenario="syscall_flood" data-label="Syscall Flood">
+            <i class="fa-solid fa-bomb"></i> 4. Fork Bomb / Syscall Flood
+        </button>
+        <button class="btn-sim-attack" data-scenario="c2_beaconing" data-label="Rogue C2 Socket">
+            <i class="fa-solid fa-network-wired"></i> 5. Rogue C2 Beaconing
+        </button>
+        <button class="btn-sim-attack" data-scenario="sensitive_file_read" data-label="Sensitive File Access">
+            <i class="fa-solid fa-key"></i> 6. /etc/shadow Exfiltration
+        </button>
+    </div>
+</div>
+
+<!-- SOC Visualizations & Charts -->
+<div class="charts-grid">
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <div class="chart-title">
+                <i class="fa-solid fa-wave-square"></i>
+                <span>Kernel Telemetry Velocity & Syscall Frequency</span>
+            </div>
+            <span class="badge-type">Live Streaming</span>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="velocityChart"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <div class="chart-title">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Threat Severity Profile</span>
+            </div>
+            <span class="badge-type">Behavioral AI</span>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="threatChart" 
+                    data-normal="{{ threat_dict.NORMAL }}"
+                    data-low="{{ threat_dict.LOW }}"
+                    data-med="{{ threat_dict.MEDIUM }}"
+                    data-high="{{ threat_dict.HIGH }}"
+                    data-crit="{{ threat_dict.CRITICAL }}"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Active Security Alerts & Quick Mitigation -->
+<div class="soc-panel">
+    <div class="soc-panel-header">
+        <div class="soc-panel-title">
+            <i class="fa-solid fa-bell"></i>
+            <span>Active High-Priority Incident Alerts</span>
+        </div>
+        <a href="{% url 'alerts' %}" class="btn-action btn-view">
+            <span>View All Alerts</span> <i class="fa-solid fa-arrow-right"></i>
+        </a>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="soc-table">
+            <thead>
+                <tr>
+                    <th>Alert ID</th>
+                    <th>Severity</th>
+                    <th>Process & PID</th>
+                    <th>Anomaly Score</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Quick Remediation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in recent_alerts %}
+                <tr id="alert-row-{{ alert.alert_id }}">
+                    <td class="font-mono text-cyan">
+                        <a href="{% url 'investigate' alert.alert_id %}" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">
+                            {{ alert.alert_id }}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge-threat badge-{{ alert.threat_level }}">{{ alert.threat_level }}</span>
+                    </td>
+                    <td class="font-mono">
+                        {% if alert.event %}
+                            <strong>{{ alert.event.process_name }}</strong> <span class="text-dim">({{ alert.event.process_id }})</span>
+                        {% else %}
+                            <span class="text-dim">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td class="font-mono" style="font-weight: 700;">
+                        {% if alert.anomaly_result %}
+                            {{ alert.anomaly_result.anomaly_score|floatformat:2 }}
+                        {% else %}
+                            0.85
+                        {% endif %}
+                    </td>
+                    <td style="max-width: 320px; font-size: 0.8rem; color: var(--text-muted);">
+                        {{ alert.title }}
+                    </td>
+                    <td>
+                        <span style="font-size: 0.75rem; font-weight: 600; color: {% if alert.status == 'ACTIVE' %}var(--accent-crimson){% elif alert.status == 'RESOLVED' %}var(--accent-emerald){% else %}var(--accent-amber){% endif %};">
+                            {{ alert.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="btn-action btn-kill btn-quick-mitigate" 
+                                    data-alert-id="{{ alert.alert_id }}" 
+                                    data-action="KILL_PROCESS"
+                                    title="Terminate malicious process immediately">
+                                <i class="fa-solid fa-skull"></i> Kill
+                            </button>
+                            <a href="{% url 'investigate' alert.alert_id %}" class="btn-action btn-view" title="Investigate forensics">
+                                <i class="fa-solid fa-magnifying-glass"></i> Forensics
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem;">
+                        No active alerts. System running safely within baseline parameters.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Live Kernel Events Stream -->
+<div class="soc-panel">
+    <div class="soc-panel-header">
+        <div class="soc-panel-title">
+            <i class="fa-solid fa-terminal"></i>
+            <span>Live Kernel Event Activity Stream</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <span class="badge-type"><i class="fa-solid fa-arrows-rotate fa-spin"></i> Polling Telemetry</span>
+            <a href="{% url 'events' %}" class="btn-action btn-view">All Events</a>
+        </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="soc-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Type</th>
+                    <th>Process (PID)</th>
+                    <th>User</th>
+                    <th>Syscall / Operation</th>
+                    <th>Threat Level</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="live-events-tbody">
+                {% for ev in recent_events %}
+                <tr>
+                    <td class="font-mono text-cyan">{{ ev.timestamp|date:"H:i:s" }}</td>
+                    <td><span class="badge-type">{{ ev.event_type }}</span></td>
+                    <td class="font-mono"><strong>{{ ev.process_name }}</strong> <span class="text-dim">({{ ev.process_id }})</span></td>
+                    <td>{{ ev.user }}</td>
+                    <td class="font-mono text-dim">{{ ev.syscall_name|default:"-" }}</td>
+                    <td>
+                        {% if ev.anomaly_result %}
+                            <span class="badge-threat badge-{{ ev.anomaly_result.threat_level }}">{{ ev.anomaly_result.threat_level }}</span>
+                        {% else %}
+                            <span class="badge-threat badge-NORMAL">NORMAL</span>
+                        {% endif %}
+                    </td>
+                    <td class="font-mono">
+                        {% if ev.anomaly_result %}
+                            {{ ev.anomaly_result.anomaly_score|floatformat:2 }}
+                        {% else %}
+                            0.05
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem;">
+                        Waiting for kernel telemetry events...
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

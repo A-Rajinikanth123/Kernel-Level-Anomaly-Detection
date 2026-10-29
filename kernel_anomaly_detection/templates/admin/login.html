@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Core Admin | Kernel Sentinel SOC</title>
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom Cyber SOC Stylesheet -->
+    <link rel="stylesheet" href="/static/css/cyber_soc.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 20%, #151d30 0%, #0a0e17 80%);
+            margin: 0;
+            padding: 1.5rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .django-admin-card {
+            width: 100%;
+            max-width: 460px;
+            background: #111726;
+            border: 1px solid rgba(6, 182, 212, 0.35);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(6, 182, 212, 0.12);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .django-admin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.76rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .form-input {
+            width: 100%;
+            background: #090e18;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 11px 14px;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            font-family: var(--font-mono);
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+            background: #0c121e;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #0891b2, #0284c7);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.45);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="django-admin-card">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="width: 52px; height: 52px; border-radius: 12px; background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.3); display: inline-flex; align-items: center; justify-content: center; color: var(--accent-cyan); font-size: 1.5rem; margin-bottom: 0.75rem;">
+                <i class="fa-solid fa-sliders"></i>
+            </div>
+            <h1 style="font-size: 1.25rem; font-weight: 800; color: #fff;">DJANGO CORE ADMIN</h1>
+            <p style="font-size: 0.78rem; color: var(--text-dim); margin-top: 4px;">
+                Kernel Sentinel &bull; Cyber Security SOC Console
+            </p>
+        </div>
+
+        {% if form.errors and not form.non_field_errors %}
+            <div style="background: rgba(239,68,68,0.18); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 1.25rem;">
+                Please correct the login errors below.
+            </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+                <div style="background: rgba(239,68,68,0.18); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 1.25rem;">
+                    {{ error }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form action="{{ app_path }}" method="post" id="login-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label" for="id_username">Admin Username</label>
+                <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username" class="form-input" placeholder="Enter admin username">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_password">Master Password</label>
+                <input type="password" name="password" autocomplete="current-password" required id="id_password" class="form-input" placeholder="Enter master password">
+            </div>
+
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <div style="margin-top: 1.75rem;">
+                <button type="submit" class="btn-submit">
+                    <i class="fa-solid fa-lock-open"></i> Log in to Django Admin
+                </button>
+            </div>
+        </form>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.78rem;">
+            <a href="{% url 'dashboard' %}" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">
+                <i class="fa-solid fa-gauge-high"></i> Back to SOC Dashboard
+            </a>
+            <a href="{% url 'admin_login' %}" style="color: #f87171; text-decoration: none; font-weight: 600;">
+                <i class="fa-solid fa-user-shield"></i> Root Admin Portal
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,193 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Security Audit Report | Kernel Sentinel{% endblock %}
+{% block page_title %}Executive Security Audit & Threat Report{% endblock %}
+
+{% block content %}
+
+<!-- Print & Filter Header (Hidden in print) -->
+<div class="report-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; gap: 8px;">
+        <a href="?timeframe=24h" class="btn-action {% if timeframe == '24h' %}btn-view{% else %}" style="background: rgba(255,255,255,0.05); color: var(--text-muted);{% endif %}">Last 24 Hours</a>
+        <a href="?timeframe=7d" class="btn-action {% if timeframe == '7d' %}btn-view{% else %}" style="background: rgba(255,255,255,0.05); color: var(--text-muted);{% endif %}">Last 7 Days</a>
+        <a href="?timeframe=30d" class="btn-action {% if timeframe == '30d' %}btn-view{% else %}" style="background: rgba(255,255,255,0.05); color: var(--text-muted);{% endif %}">Last 30 Days</a>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <a href="{% url 'download_zip' %}" class="btn-action btn-view" style="border-color: var(--accent-cyan);">
+            <i class="fa-solid fa-file-zipper"></i> Download Project ZIP
+        </a>
+        <a href="{% url 'export_csv' %}" class="btn-action btn-resolve">
+            <i class="fa-solid fa-file-csv"></i> Download SIEM CSV
+        </a>
+        <button onclick="window.print()" class="btn-action btn-view" style="padding: 8px 18px;">
+            <i class="fa-solid fa-print"></i> Print / Save as PDF
+        </button>
+    </div>
+</div>
+
+<!-- Formal Report Document Container -->
+<div class="soc-panel" style="padding: 2.5rem; background: #0e1422;">
+
+    <!-- Formal Report Header -->
+    <div style="border-bottom: 2px solid var(--accent-cyan); padding-bottom: 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+        <div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-cyan); letter-spacing: 0.1em; text-transform: uppercase;">
+                CYBER SECURITY OPERATIONS CENTER &bull; INCIDENT AUDIT
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 2px;">
+                Kernel Security Sentinel &bull; Threat Intelligence &amp; Forensic Analysis
+            </div>
+            <h1 style="font-size: 1.35rem; color: #fff; margin-top: 0.6rem; font-weight: 800;">
+                AI-Based Kernel-Level Anomaly Detection &amp; Security Audit Report
+            </h1>
+        </div>
+
+        <div style="text-align: right;">
+            <div style="font-size: 0.78rem; color: var(--text-dim);">Classification:</div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: #fff;">CONFIDENTIAL // SOC AUDIT</div>
+            <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">
+                Generated: {{ report_date|date:"F d, Y H:i:s" }} UTC
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Summary Section -->
+    <div style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.05rem; color: var(--accent-cyan); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            1. Executive Summary &amp; Threat Posture
+        </h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+            This audit report summarizes low-level operating system events monitored via Linux eBPF kernel probes and real-time telemetry across the past <strong>{{ days }} day(s)</strong>.
+            The system utilized behavioral Machine Learning (Isolation Forest ensemble) to detect zero-day and stealthy operating-system threats operating below traditional network and application security boundaries.
+        </p>
+    </div>
+
+    <!-- Metric Cards Grid -->
+    <div class="stats-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+        <div class="stat-card" style="padding: 1rem;">
+            <div class="stat-info">
+                <div class="stat-label">Total Events</div>
+                <div class="stat-value" style="font-size: 1.5rem;">{{ total_events }}</div>
+            </div>
+        </div>
+
+        <div class="stat-card anomaly-card" style="padding: 1rem;">
+            <div class="stat-info">
+                <div class="stat-label">Anomalies Detected</div>
+                <div class="stat-value" style="font-size: 1.5rem; color: var(--accent-amber);">{{ anomalies }}</div>
+            </div>
+        </div>
+
+        <div class="stat-card threat-card" style="padding: 1rem;">
+            <div class="stat-info">
+                <div class="stat-label">Critical Incidents</div>
+                <div class="stat-value" style="font-size: 1.5rem; color: var(--accent-crimson);">{{ critical_count }}</div>
+            </div>
+        </div>
+
+        <div class="stat-card healthy-card" style="padding: 1rem;">
+            <div class="stat-info">
+                <div class="stat-label">Mitigated Threats</div>
+                <div class="stat-value" style="font-size: 1.5rem; color: var(--accent-emerald);">{{ resolved_count }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Suspicious Processes -->
+    <div style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.05rem; color: var(--accent-cyan); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            2. Most Frequently Flagged Malicious / Anomalous Processes
+        </h3>
+        <table class="soc-table">
+            <thead>
+                <tr>
+                    <th>Process Name</th>
+                    <th>Flagged Anomalies</th>
+                    <th>Primary Threat Vector</th>
+                    <th>Risk Rating</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proc in top_threat_processes %}
+                <tr>
+                    <td class="font-mono"><strong>{{ proc.process_name }}</strong></td>
+                    <td class="font-mono text-cyan">{{ proc.count }}</td>
+                    <td style="color: var(--text-muted);">Abnormal syscall burst / privilege deviation</td>
+                    <td><span class="badge-threat badge-CRITICAL">HIGH RISK</span></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="color: var(--text-dim); text-align: center; padding: 1.25rem;">
+                        No repeated suspicious processes recorded during this reporting window.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Detailed Incidents Table -->
+    <div style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.05rem; color: var(--accent-cyan); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            3. Log of Detected Security Incidents &amp; Alerts
+        </h3>
+        <table class="soc-table">
+            <thead>
+                <tr>
+                    <th>Alert ID</th>
+                    <th>Timestamp</th>
+                    <th>Severity</th>
+                    <th>Target Process</th>
+                    <th>AI Anomaly Score</th>
+                    <th>Remediation Action</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inc in incident_list %}
+                <tr>
+                    <td class="font-mono text-cyan" style="font-weight: 700;">{{ inc.alert_id }}</td>
+                    <td class="font-mono text-dim" style="font-size: 0.78rem;">{{ inc.created_at|date:"Y-m-d H:i" }}</td>
+                    <td><span class="badge-threat badge-{{ inc.threat_level }}">{{ inc.threat_level }}</span></td>
+                    <td class="font-mono">
+                        {% if inc.event %}{{ inc.event.process_name }} (PID {{ inc.event.process_id }}){% else %}-{% endif %}
+                    </td>
+                    <td class="font-mono" style="font-weight: 700;">
+                        {% if inc.anomaly_result %}{{ inc.anomaly_result.anomaly_score|floatformat:2 }}{% else %}0.85{% endif %}
+                    </td>
+                    <td style="font-size: 0.78rem; color: var(--text-muted); max-width: 250px;">
+                        {{ inc.mitigation_action_taken|default:"Under active monitoring" }}
+                    </td>
+                    <td>
+                        <strong style="font-size: 0.75rem; color: {% if inc.status == 'RESOLVED' %}var(--accent-emerald){% else %}var(--accent-crimson){% endif %};">
+                            {{ inc.status }}
+                        </strong>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem;">
+                        No incidents registered in this timeframe.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Security Recommendations -->
+    <div style="background: rgba(6, 182, 212, 0.04); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 8px; padding: 1.25rem;">
+        <h4 style="color: var(--accent-cyan); font-size: 0.9rem; margin-bottom: 0.5rem; text-transform: uppercase;">
+            <i class="fa-solid fa-clipboard-check"></i> Security Engineering Recommendations
+        </h4>
+        <ul style="color: var(--text-muted); font-size: 0.82rem; padding-left: 1.25rem; line-height: 1.6;">
+            <li>Enforce kernel namespace isolation (cgroups, AppArmor/SELinux profiles) on processes exhibiting unauthorized <code class="font-mono">setuid</code> attempts.</li>
+            <li>Maintain periodic retraining of the Isolation Forest baseline model to account for legitimate OS package upgrades and system maintenance workflows.</li>
+            <li>Automate real-time binary quarantine for processes executing out of temporary directories (<code class="font-mono">/tmp</code>, <code class="font-mono">/dev/shm</code>).</li>
+        </ul>
+    </div>
+
+</div>
+
+{% endblock %}

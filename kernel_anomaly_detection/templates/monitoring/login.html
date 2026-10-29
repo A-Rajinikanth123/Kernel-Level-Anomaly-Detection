@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Portal | Kernel Sentinel SOC</title>
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom Cyber SOC Stylesheet -->
+    <link rel="stylesheet" href="/static/css/cyber_soc.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 30%, #111a2d 0%, #080c14 100%);
+        }
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: #0f1624;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+        .form-input {
+            width: 100%;
+            background: #070a10;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.25);
+        }
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #0891b2, #0284c7);
+            border: none;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+        }
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.45);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="width: 52px; height: 52px; border-radius: 12px; background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.3); display: inline-flex; align-items: center; justify-content: center; color: var(--accent-cyan); font-size: 1.5rem; margin-bottom: 0.75rem;">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h1 style="font-size: 1.25rem; font-weight: 800; color: #fff;">KERNEL SENTINEL SOC</h1>
+            <p style="font-size: 0.78rem; color: var(--text-dim); margin-top: 4px;">
+                Enterprise Cyber Security Operations Center
+            </p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-input" placeholder="Enter username" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Security Key / Password</label>
+                <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+            </div>
+
+            <div style="margin-top: 1.75rem;">
+                <button type="submit" class="btn-submit">
+                    <i class="fa-solid fa-lock-open"></i> Access Security Console
+                </button>
+            </div>
+        </form>
+
+        <div style="margin-top: 1.75rem; text-align: center;">
+            <a href="{% url 'admin_login' %}" style="display: inline-flex; align-items: center; gap: 8px; color: #f87171; text-decoration: none; font-size: 0.82rem; font-weight: 700; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); padding: 8px 16px; border-radius: 8px; transition: all 0.2s;">
+                <i class="fa-solid fa-user-shield"></i> Open Root Administrator Portal <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
